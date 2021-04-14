@@ -56,28 +56,60 @@ export const exec = async function(req: Request, res: Response) {
     }
     const language = languages[req.body.language];
 
+    if(req.body.stdin && !req.body.stdin.endsWith('\n')) {
+        req.body.stdin += '\n';
+    }
+
     const id = uuid();
 
     await fs.promises.mkdir(`${os.tmpdir()}/${id}`);
     await fs.promises.writeFile(`${os.tmpdir()}/${id}/exec`, req.body.code);
     let data = '';
 
-    const stream = new Writable();
-    stream._write = function(chunk, encoding, callback) {
-        data += chunk;
+    const writeStream = new Writable();
+    let stdinProcessed = false;
+    writeStream._write = function(chunk, encoding, callback) {
+        if(!stdinProcessed) {
+            stdinProcessed = true;
+        }
+        else {
+            data += chunk;
+        }
+        callback();
     }
 
-    const [result,_] = await docker.run(language.image, language.command, stream, {
+    const container = await docker.createContainer({
+        Image: language.image,
+        Tty: true,
+        OpenStdin: true,
         HostConfig: {
             Binds: [`${os.tmpdir()}/${id}:/app`]
-        }
+        },
+        AttachStdout: true,
+        AttachStderr: true,
+        AttachStdin: true,
+        Cmd: language.command
     });
+    await container.start();
 
-    if(result.StatusCode) {
-        res.status(400);
+    const rwstream = await container.attach({
+        hijack: true,
+        stdin: true,
+        stdout: true,
+        stderr: true,
+        stream: true
+    });
+    rwstream.pipe(writeStream);
+    if(req.body.stdin) {
+        rwstream.write(req.body.stdin);
     }
-    else{
-        res.status(200);
-    }
+
+    await container.wait({
+        condition: 'not-running'
+    });
+    await container.remove();
+
+    res.status(200);
+
     return res.send({result: data});
 }
