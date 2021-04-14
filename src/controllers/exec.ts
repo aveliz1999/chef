@@ -11,6 +11,14 @@ const languages = {
     js: {
         image: 'node:15.14.0-alpine3.10',
         command: ['node', '/app/exec']
+    },
+    python2: {
+        image: 'python:2-alpine',
+        command: ['python2', '/app/exec']
+    },
+    python3: {
+        image: 'python:3-alpine',
+        command: ['python3', '/app/exec']
     }
 }
 
@@ -29,7 +37,11 @@ Promise.all(Object.values(languages).map(lang => docker.pull(lang.image)))
 
 const aliases = [
     ['javascript', 'js'],
-    ['node', 'js']
+    ['node', 'js'],
+    ['python', 'python3'],
+    ['py', 'python3'],
+    ['py3', 'python3'],
+    ['py2', 'python2']
 ]
 for(let alias of aliases) {
     languages[alias[0]] = languages[alias[1]];
