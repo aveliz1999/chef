@@ -14,6 +14,19 @@ const languages = {
     }
 }
 
+let initialized = false;
+console.log('Pulling images...');
+Promise.all(Object.values(languages).map(lang => docker.pull(lang.image)))
+    .then(() => {
+        initialized = true;
+        console.log('All images pulled successfully')
+    })
+    .catch((e) => {
+        console.error('An error occurred while pulling the images:');
+        console.error(e);
+        process.exit(1);
+    });
+
 const aliases = [
     ['javascript', 'js'],
     ['node', 'js']
@@ -23,6 +36,9 @@ for(let alias of aliases) {
 }
 
 export const exec = async function(req: Request, res: Response) {
+    if(!initialized) {
+        return res.status(503).send({message: 'The server is still initializing...'});
+    }
     if(!Object.keys(languages).includes(req.body.language)) {
         return res.status(400).send({message: 'Unsupported language'});
     }
@@ -39,7 +55,6 @@ export const exec = async function(req: Request, res: Response) {
         data += chunk;
     }
 
-    await docker.pull(language.image);
     const [result,_] = await docker.run(language.image, language.command, stream, {
         HostConfig: {
             Binds: [`${os.tmpdir()}/${id}:/app`]
