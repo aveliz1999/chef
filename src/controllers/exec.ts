@@ -14,6 +14,14 @@ const languages = {
     }
 }
 
+const aliases = [
+    ['javascript', 'js'],
+    ['node', 'js']
+]
+for(let alias of aliases) {
+    languages[alias[0]] = languages[alias[1]];
+}
+
 export const exec = async function(req: Request, res: Response) {
     if(!Object.keys(languages).includes(req.body.language)) {
         return res.status(400).send({message: 'Unsupported language'});
