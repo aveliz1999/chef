@@ -7,6 +7,7 @@ import * as os from "os";
 
 const docker = new Docker();
 
+// Declare the language images and container commands
 const languages = {
     js: {
         image: 'node:15.14.0-alpine3.10',
@@ -22,6 +23,7 @@ const languages = {
     }
 }
 
+// Pull all the images ahead of time to save execution time
 let initialized = false;
 console.log('Pulling images...');
 Promise.all(Object.values(languages).map(lang => docker.pull(lang.image)))
@@ -35,6 +37,7 @@ Promise.all(Object.values(languages).map(lang => docker.pull(lang.image)))
         process.exit(1);
     });
 
+// Declare language aliases in the form of [alias, language]
 const aliases = [
     ['javascript', 'js'],
     ['node', 'js'],
@@ -47,25 +50,35 @@ for(let alias of aliases) {
     languages[alias[0]] = languages[alias[1]];
 }
 
+/**
+ * TODO Implement error handling and reporting
+ *
+ * TODO Validate request inputs properly (with something like Joi)
+ */
 export const exec = async function(req: Request, res: Response) {
+    // Don't execute code until all the images are pulled
     if(!initialized) {
         return res.status(503).send({message: 'The server is still initializing...'});
     }
+
+    // Don't allow executing unless the language is supported
     if(!Object.keys(languages).includes(req.body.language)) {
         return res.status(400).send({message: 'Unsupported language'});
     }
     const language = languages[req.body.language];
 
+    // Pad stdin with a newline if it doesn't end with one so that stdin doesn't hang
     if(req.body.stdin && !req.body.stdin.endsWith('\n')) {
         req.body.stdin += '\n';
     }
 
+    // Generate a unique ID for the run and store the code in a temporary folder
     const id = uuid();
-
     await fs.promises.mkdir(`${os.tmpdir()}/${id}`);
     await fs.promises.writeFile(`${os.tmpdir()}/${id}/exec`, req.body.code);
     let data = '';
 
+    // Handle writing the stdout/stderr to the data variable
     const writeStream = new Writable();
     let stdinProcessed = false;
     writeStream._write = function(chunk, encoding, callback) {
@@ -78,6 +91,7 @@ export const exec = async function(req: Request, res: Response) {
         callback();
     }
 
+    // Create the container with the volume mount
     const container = await docker.createContainer({
         Image: language.image,
         Tty: true,
@@ -92,6 +106,7 @@ export const exec = async function(req: Request, res: Response) {
     });
     await container.start();
 
+    // Attach the streams to the container
     const rwstream = await container.attach({
         hijack: true,
         stdin: true,
@@ -103,13 +118,20 @@ export const exec = async function(req: Request, res: Response) {
     if(req.body.stdin) {
         rwstream.write(req.body.stdin);
     }
+    else {
+        rwstream.write('\n');
+    }
 
+    // Wait until the container stops and remove it
     await container.wait({
         condition: 'not-running'
     });
+
+    res.send({result: data});
+
+    // Remove the container and the temporary folder used to hold the code
+    await fs.promises.rmdir(`${os.tmpdir()}/${id}`, {
+        recursive: true
+    });
     await container.remove();
-
-    res.status(200);
-
-    return res.send({result: data});
 }
