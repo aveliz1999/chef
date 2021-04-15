@@ -77,18 +77,16 @@ export const exec = async function(req: Request, res: Response) {
     await fs.promises.mkdir(`${os.tmpdir()}/${id}`);
     await fs.promises.writeFile(`${os.tmpdir()}/${id}/exec`, req.body.code);
 
+    // StdOut and StdErr combined
+    let combinedOutput = '';
+
     // Handle writing the stdout/stderr to the data variable
     const stdoutStream = new Writable();
     let stdinProcessed = false;
     let stdout = '';
     stdoutStream._write = function(chunk, encoding, callback) {
-        if(!stdinProcessed) {
-            stdinProcessed = true;
-            stdout += chunk;
-        }
-        else {
-            stdout += chunk;
-        }
+        stdout += chunk;
+        combinedOutput += chunk;
         callback();
     }
 
@@ -96,6 +94,7 @@ export const exec = async function(req: Request, res: Response) {
     let stderr = '';
     stderrStream._write = function (chunk, encoding, callback) {
         stderr += chunk;
+        combinedOutput += chunk;
         callback();
     }
 
@@ -137,7 +136,8 @@ export const exec = async function(req: Request, res: Response) {
 
     const result = {
         stdout,
-        stderr
+        stderr,
+        combinedOutput
     }
     res.send(result);
 
