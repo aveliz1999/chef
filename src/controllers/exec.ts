@@ -76,25 +76,33 @@ export const exec = async function(req: Request, res: Response) {
     const id = uuid();
     await fs.promises.mkdir(`${os.tmpdir()}/${id}`);
     await fs.promises.writeFile(`${os.tmpdir()}/${id}/exec`, req.body.code);
-    let data = '';
 
     // Handle writing the stdout/stderr to the data variable
-    const writeStream = new Writable();
+    const stdoutStream = new Writable();
     let stdinProcessed = false;
-    writeStream._write = function(chunk, encoding, callback) {
+    let stdout = '';
+    stdoutStream._write = function(chunk, encoding, callback) {
         if(!stdinProcessed) {
             stdinProcessed = true;
+            stdout += chunk;
         }
         else {
-            data += chunk;
+            stdout += chunk;
         }
+        callback();
+    }
+
+    const stderrStream = new Writable();
+    let stderr = '';
+    stderrStream._write = function (chunk, encoding, callback) {
+        stderr += chunk;
         callback();
     }
 
     // Create the container with the volume mount
     const container = await docker.createContainer({
         Image: language.image,
-        Tty: true,
+        Tty: false,
         OpenStdin: true,
         HostConfig: {
             Binds: [`${os.tmpdir()}/${id}:/app`]
@@ -114,7 +122,7 @@ export const exec = async function(req: Request, res: Response) {
         stderr: true,
         stream: true
     });
-    rwstream.pipe(writeStream);
+    container.modem.demuxStream(rwstream, stdoutStream, stderrStream)
     if(req.body.stdin) {
         rwstream.write(req.body.stdin);
     }
@@ -127,7 +135,11 @@ export const exec = async function(req: Request, res: Response) {
         condition: 'not-running'
     });
 
-    res.send({result: data});
+    const result = {
+        stdout,
+        stderr
+    }
+    res.send(result);
 
     // Remove the container and the temporary folder used to hold the code
     await fs.promises.rmdir(`${os.tmpdir()}/${id}`, {
