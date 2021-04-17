@@ -5,51 +5,28 @@ import {v4 as uuid} from "uuid";
 import fs from 'fs';
 import * as os from "os";
 import Joi, {ValidationError} from 'joi';
+import {init as initializeLanguages, Language} from '../languages';
 
 const docker = new Docker();
 
-// Declare the language images and container commands
-const languages = {
-    js: {
-        image: 'node:15.14.0-alpine3.10',
-        command: ['node', '/app/exec']
-    },
-    python2: {
-        image: 'python:2-alpine',
-        command: ['python2', '/app/exec']
-    },
-    python3: {
-        image: 'python:3-alpine',
-        command: ['python3', '/app/exec']
-    }
-}
-
-// Pull all the images ahead of time to save execution time
+let languages: {
+    [key: string]: Language
+};
 let initialized = false;
+
+// Initialize the language object and pull all the docker images
 console.log('Pulling images...');
-Promise.all(Object.values(languages).map(lang => docker.pull(lang.image)))
-    .then(() => {
+initializeLanguages()
+    .then((languageList) => {
+        languages = languageList;
         initialized = true;
         console.log('All images pulled successfully')
     })
-    .catch((e) => {
+    .catch((err) => {
         console.error('An error occurred while pulling the images:');
-        console.error(e);
+        console.error(err);
         process.exit(1);
-    });
-
-// Declare language aliases in the form of [alias, language]
-const aliases = [
-    ['javascript', 'js'],
-    ['node', 'js'],
-    ['python', 'python3'],
-    ['py', 'python3'],
-    ['py3', 'python3'],
-    ['py2', 'python2']
-]
-for(let alias of aliases) {
-    languages[alias[0]] = languages[alias[1]];
-}
+    })
 
 export const exec = async function(req: Request, res: Response) {
     // Don't execute code until all the images are pulled
