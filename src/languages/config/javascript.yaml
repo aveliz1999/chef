@@ -1,0 +1,9 @@
+name: javascript
+aliases:
+  - js
+  - node
+  - nodejs
+image: node:15.14.0-alpine3.10
+command:
+  - node
+  - /app/exec

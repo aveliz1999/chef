@@ -1,0 +1,9 @@
+name: python3
+aliases:
+  - python
+  - py
+  - py3
+image: python:3-alpine
+command:
+  - python3
+  - /app/exec
