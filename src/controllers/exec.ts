@@ -68,7 +68,7 @@ export const exec = async function(req: Request, res: Response) {
         await fs.promises.writeFile(`${os.tmpdir()}/${id}/exec`, request.code);
 
         // Run the code through the appropriate runner and send back the result
-        const result = await runners[request.mode].run('', language, request.stdin);
+        const result = await runners[request.mode].run(`${os.tmpdir()}/${id}`, language, request.stdin);
         res.send(result);
 
         // Remove the temporary folder used to hold the code

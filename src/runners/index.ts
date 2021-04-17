@@ -1,10 +1,16 @@
 import Runner from "./Runner";
+import DockerImmediate from "./DockerImmediate";
 
 export const runners: {
     [key: string]: Runner
 } = {};
 
-export const runnerTypes: string[] = Object.values(runners).map(runner => runner.type);
+// Declare all the available runners
+const runnerList = [
+    new DockerImmediate()
+]
+runnerList.forEach((runner) => runners[runner.type] = runner)
 
-// TODO assign a default runner type
-export const defaultRunnerType = '';
+export const runnerTypes: string[] = Object.keys(runners);
+
+export const defaultRunnerType: string = runnerList[0].type;
