@@ -1,13 +1,10 @@
 import {Request, Response} from "express";
-import Docker from "dockerode";
-import {Writable} from "stream";
 import {v4 as uuid} from "uuid";
 import fs from 'fs';
 import * as os from "os";
 import Joi, {ValidationError} from 'joi';
 import {init as initializeLanguages, Language} from '../languages';
-
-const docker = new Docker();
+import {runners, runnerTypes, defaultRunnerType} from "../runners";
 
 let languages: {
     [key: string]: Language
@@ -46,8 +43,8 @@ export const exec = async function(req: Request, res: Response) {
             .max(64),
         mode: Joi.string()
             .optional()
-            .valid('static', 'interactive')
-            .default('static')
+            .valid(...runnerTypes)
+            .default(defaultRunnerType)
     });
 
     try {
@@ -57,8 +54,6 @@ export const exec = async function(req: Request, res: Response) {
             stdin?: string,
             mode: string
         } = await requestSchema.validateAsync(req.body);
-
-        console.log(request);
 
         const language = languages[request.language];
 
@@ -72,75 +67,14 @@ export const exec = async function(req: Request, res: Response) {
         await fs.promises.mkdir(`${os.tmpdir()}/${id}`);
         await fs.promises.writeFile(`${os.tmpdir()}/${id}/exec`, request.code);
 
-        // StdOut and StdErr combined
-        let combinedOutput = '';
-
-        // Handle writing the stdout/stderr to the data variable
-        const stdoutStream = new Writable();
-        let stdinProcessed = false;
-        let stdout = '';
-        stdoutStream._write = function(chunk, encoding, callback) {
-            stdout += chunk;
-            combinedOutput += chunk;
-            callback();
-        }
-
-        const stderrStream = new Writable();
-        let stderr = '';
-        stderrStream._write = function (chunk, encoding, callback) {
-            stderr += chunk;
-            combinedOutput += chunk;
-            callback();
-        }
-
-        // Create the container with the volume mount
-        const container = await docker.createContainer({
-            Image: language.image,
-            Tty: false,
-            OpenStdin: true,
-            HostConfig: {
-                Binds: [`${os.tmpdir()}/${id}:/app`]
-            },
-            AttachStdout: true,
-            AttachStderr: true,
-            AttachStdin: true,
-            Cmd: language.command
-        });
-        await container.start();
-
-        // Attach the streams to the container
-        const rwstream = await container.attach({
-            hijack: true,
-            stdin: true,
-            stdout: true,
-            stderr: true,
-            stream: true
-        });
-        container.modem.demuxStream(rwstream, stdoutStream, stderrStream)
-        if(request.stdin) {
-            rwstream.write(request.stdin);
-        }
-        else {
-            rwstream.write('\n');
-        }
-
-        // Wait until the container stops and remove it
-        await container.wait({
-            condition: 'not-running'
-        });
-
-        const result = {
-            stdout,
-            stderr,
-            combinedOutput
-        }
+        // Run the code through the appropriate runner and send back the result
+        const result = await runners[request.mode].run('', language, request.stdin);
         res.send(result);
 
-        // Remove the container and the temporary folder used to hold the code
+        // Remove the temporary folder used to hold the code
         await fs.promises.rmdir(`${os.tmpdir()}/${id}`, {
             recursive: true
         });
-        await container.remove();
     }
     catch(err) {
         if (err.isJoi) {

@@ -15,11 +15,14 @@ export type Language = {
 export const init: () => Promise<{
     [key: string]: Language
 }> = async function() {
-
+    // Get the list of language config files
     const fileNames = await fs.promises.readdir(path.resolve(__dirname, './config'));
-    console.log(fileNames);
     const files = await Promise.all(fileNames.map(filename => fs.promises.readFile(path.resolve(__dirname, './config', filename), 'utf-8')));
+
+    // Parse the language yaml config files into objects
     const parsedLanguages: Language[] = files.map(file => yaml.parse(file));
+
+    // Populate the languages object and pull all the required docker images
     const languages: {
         [key: string]: Language
     } = {}
@@ -27,10 +30,13 @@ export const init: () => Promise<{
         languages[language.name] = language;
         await docker.pull(language.image);
     }
+
+    // Set up the aliases
     for(let language of parsedLanguages) {
         for(let alias of language.aliases) {
             languages[alias] = language;
         }
     }
+
     return languages;
 }

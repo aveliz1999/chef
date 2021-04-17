@@ -11,6 +11,6 @@
     "resolveJsonModule": true
   },
   "lib": [
-    "es2015"
+    "es2019"
   ]
 }
