@@ -43,7 +43,7 @@ export default class DockerImmediate implements Runner {
             AttachStdin: true,
             Cmd: language.command
         });
-        console.log(`Starting ${this.type} runner to run ${language} code. Container ID: ${container.id}`);
+        console.log(`Starting ${this.type} runner to run ${language.name} code. Container ID: ${container.id}`);
         await container.start();
 
 

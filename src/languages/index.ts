@@ -41,8 +41,10 @@ export const init: () => Promise<[
     } = {...languages};
     // Set up the aliases
     for(let language of parsedLanguages) {
-        for(let alias of language.aliases) {
-            languagesWithAliases[alias] = language;
+        if(language.aliases) {
+            for(let alias of language.aliases) {
+                languagesWithAliases[alias] = language;
+            }
         }
     }
 

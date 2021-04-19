@@ -1,0 +1,7 @@
+name: c
+aliases:
+image: gcc:10
+command:
+  - /bin/bash
+  - -c
+  - gcc -x c -o /tmp/exec_output /app/exec && /tmp/exec_output
