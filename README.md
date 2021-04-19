@@ -2,15 +2,20 @@
 
 CHEF is an API for executing arbitrary code securely. All the code execution is handled by docker containers
 so that no malicious code can affect the host that it's running on, but it uses small containers in order to avoid long 
-startup times. Adding new languages is as simple as adding a JSON object in the format of
+startup times. Adding new languages is as simple as adding a YAML object under /src/languages/config in the format of
 
-```json
-{
-  "image": "image-name:version",
-  "command": ["command", "to", "run", "/app/exec"]
-}
+```yaml
+name: language-name
+aliases:
+  - language-alias-1
+  - language-alias-2
+image: dockerimage:dockerimage-version
+command:
+  - language_executable
+  - /app/exec
 ```
-So that it executes the code that will be placed in `/app/exec`. Small images should be prioritized.
+So that it executes the code that will be placed in `/app/exec`. Small images like ones based on alpine
+should be prioritized.
 
 ## Requirements
 
@@ -32,8 +37,9 @@ After that, send a POST request to the endpoint with the following format as the
 {
   "language": "language-here",
   "code": "print('The code to run goes here')",
-  "stdin": "The standard input that will be piped in"
+  "stdin": "The standard input that will be piped in",
+  "mode": "runner-mode"
 }
 ```
 
-The stdin field is optional.
+The stdin and mode fields is optional. When no mode is specified, it will default to docker-immediate.
