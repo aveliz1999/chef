@@ -1,0 +1,8 @@
+name: go
+aliases:
+  - golang
+image: golang:alpine
+command:
+  - sh
+  - -c
+  - mv /app/exec /app/exec.go && go run /app/exec.go
