@@ -12,9 +12,14 @@ export type Language = {
     command: string[]
 }
 
-export const init: () => Promise<{
-    [key: string]: Language
-}> = async function() {
+export const init: () => Promise<[
+    {
+        [key: string]: Language
+    },
+    {
+        [key: string]: Language
+    }
+]> = async function() {
     // Get the list of language config files
     const fileNames = await fs.promises.readdir(path.resolve(__dirname, './config'));
     const files = await Promise.all(fileNames.map(filename => fs.promises.readFile(path.resolve(__dirname, './config', filename), 'utf-8')));
@@ -31,12 +36,15 @@ export const init: () => Promise<{
         await docker.pull(language.image);
     }
 
+    const languagesWithAliases: {
+        [key: string]: Language
+    } = {...languages};
     // Set up the aliases
     for(let language of parsedLanguages) {
         for(let alias of language.aliases) {
-            languages[alias] = language;
+            languagesWithAliases[alias] = language;
         }
     }
 
-    return languages;
+    return [languages, languagesWithAliases];
 }

@@ -9,13 +9,17 @@ import {runners, runnerTypes, defaultRunnerType} from "../runners";
 let languages: {
     [key: string]: Language
 };
+let languagesNoAliases: {
+    [key: string]: Language
+};
 let initialized = false;
 
 // Initialize the language object and pull all the docker images
 console.log('Pulling images...');
 initializeLanguages()
-    .then((languageList) => {
-        languages = languageList;
+    .then(([languageList, languageListWithAliases]) => {
+        languages = languageListWithAliases;
+        languagesNoAliases = languageList;
         initialized = true;
         console.log('All images pulled successfully')
     })
@@ -83,4 +87,8 @@ export const exec = async function(req: Request, res: Response) {
         console.error(err);
         return res.status(500).send({message: 'An error has occurred on the server.'})
     }
+}
+
+export const versions = async function(req: Request, res: Response) {
+    return res.send(languagesNoAliases);
 }
