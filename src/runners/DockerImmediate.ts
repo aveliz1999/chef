@@ -36,7 +36,8 @@ export default class DockerImmediate implements Runner {
             Tty: false,
             OpenStdin: true,
             HostConfig: {
-                Binds: [`${execMountPath}:/app`]
+                Binds: [`${execMountPath}:/app`],
+                Runtime: 'runsc'
             },
             AttachStdout: true,
             AttachStderr: true,

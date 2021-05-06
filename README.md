@@ -2,8 +2,10 @@
 
 CHEF is an API for executing arbitrary code securely. All the code execution is handled by docker containers
 so that no malicious code can affect the host that it's running on, but it uses small containers in order to avoid long 
-startup times. Adding new languages is as simple as adding a YAML object under /src/languages/config in the format of
+startup times. Additionally it runs with the gVisor runsc runtime in order to provide an additional layer of isolation 
+from the host system. 
 
+Adding new languages is as simple as adding a YAML object under /src/languages/config in the format of
 ```yaml
 name: language-name
 aliases:
@@ -21,6 +23,7 @@ should be prioritized.
 
 * Docker must be installed on the host
 * Node.js must be installed on the host
+* [gVisor runsc environment](https://gvisor.dev/docs/user_guide/install)
 
 ## Install Instructions
 
