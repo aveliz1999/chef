@@ -43,9 +43,6 @@ export default class DockerImmediate implements Runner {
             AttachStdin: true,
             Cmd: language.command
         });
-        console.log(`Starting ${this.type} runner to run ${language.name} code. Container ID: ${container.id}`);
-        await container.start();
-
 
         // Attach the streams to the container
         const rwstream = await container.attach({
@@ -55,6 +52,10 @@ export default class DockerImmediate implements Runner {
             stderr: true,
             stream: true
         });
+
+        console.log(`Starting ${this.type} runner to run ${language.name} code. Container ID: ${container.id}`);
+        await container.start();
+
         container.modem.demuxStream(rwstream, stdoutStream, stderrStream)
         if(stdin) {
             rwstream.write(stdin);
