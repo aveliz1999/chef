@@ -1,0 +1,6 @@
+name: bash
+aliases:
+image: bash:5
+command:
+  - bash
+  - /app/exec
