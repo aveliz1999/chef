@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node bin/www.ts"
+    "start": "ts-node bin/www.ts",
+    "cluster": "ts-node bin/cluster.ts"
   },
   "keywords": [],
   "author": "",
