@@ -55,9 +55,18 @@ export default class DockerImmediate implements Runner {
         });
 
         console.log(`Starting ${this.type} runner to run ${language.name} code. Container ID: ${container.id}`);
+        container.modem.demuxStream(rwstream, stdoutStream, stderrStream)
         await container.start();
 
-        container.modem.demuxStream(rwstream, stdoutStream, stderrStream)
+        let running = true;
+
+        setTimeout(async () => {
+            if(running) {
+                stderrStream.write('\n\n\n---------------------\nExecution ran over 3 seconds.\nKilling the process.\n---------------------\n\n\n', 'utf-8');
+                await container.kill();
+            }
+        }, /* TODO change value to not be hardcoded*/3000)
+
         if(stdin) {
             rwstream.write(stdin);
         }
@@ -69,6 +78,7 @@ export default class DockerImmediate implements Runner {
         await container.wait({
             condition: 'not-running'
         });
+        running = false;
 
         /*
          * Remove the container from the system. Done with then/catch rather than await so that this step is done
