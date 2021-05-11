@@ -8,7 +8,13 @@ const docker = new Docker();
 export default class DockerImmediate implements Runner {
     type = 'docker-immediate';
 
-    async run(execMountPath: string, language: Language, stdin: string | undefined) {
+    async run(execMountPath: string, language: Language, user: Express.User, stdin: string | undefined) {
+        if(user.mode !== this.type) {
+            return {
+                message: `That token is not valid for ${this.type} mode runs.`
+            }
+        }
+
         // StdOut and StdErr combined
         let combinedOutput = '';
 
@@ -62,10 +68,10 @@ export default class DockerImmediate implements Runner {
 
         setTimeout(async () => {
             if(running) {
-                stderrStream.write('\n\n\n---------------------\nExecution ran over 3 seconds.\nKilling the process.\n---------------------\n\n\n', 'utf-8');
+                stderrStream.write(`\n\n\n---------------------\nExecution ran over ${(user.maxRuntime || 3000) / 1000} seconds.\nKilling the process.\n---------------------\n\n\n`, 'utf-8');
                 await container.kill();
             }
-        }, /* TODO change value to not be hardcoded*/3000)
+        }, user.maxRuntime || 3000)
 
         if(stdin) {
             rwstream.write(stdin);
