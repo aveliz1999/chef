@@ -1,0 +1,8 @@
+name: typescript
+fileExtension: .ts
+aliases:
+  - ts
+image: aveliz/ts-node:15-alpine
+command:
+  - ts-node
+  - /app/exec
