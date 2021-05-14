@@ -3,7 +3,7 @@ aliases:
   - js
   - node
   - nodejs
-image: node:15.14.0-alpine3.10
+image: node:15-alpine
 command:
   - node
   - /app/exec
