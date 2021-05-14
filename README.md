@@ -8,6 +8,7 @@ from the host system.
 Adding new languages is as simple as adding a YAML object under /src/languages/config in the format of
 ```yaml
 name: language-name
+fileExtension: .test
 aliases:
   - language-alias-1
   - language-alias-2
@@ -34,8 +35,10 @@ should be prioritized.
 ## Usage
 
 Running `npm start` will start the server on port 3000 (which can be changed by setting the environment variable `PORT`).
-After that, send a POST request to the endpoint with the following format as the body:
 
+You can then get an API key by sending a POST request to the `/auth` endpoint.
+
+After that, send a POST request to the endpoint with the following format as the body:
 ```json
 {
   "language": "language-here",
@@ -44,5 +47,24 @@ After that, send a POST request to the endpoint with the following format as the
   "mode": "runner-mode"
 }
 ```
+The API key must be included as a bearer key with the `Authorization` header.
+The stdin and mode fields are optional. When no mode is specified, it will default to docker-immediate.
 
-The stdin and mode fields is optional. When no mode is specified, it will default to docker-immediate.
+The response body will have the following format for a successful run:
+
+```json
+{
+  "stdout": "stdout",
+  "stderr": "stderr",
+  "combinedOutput": "stdout & stderr",
+  "executionTime": 1000
+}
+```
+where executionTime is in milliseconds.
+
+If an error occurred while trying to execute the code, the response will have the following format:
+```json
+{
+  "message": "error message here"
+}
+```
