@@ -7,6 +7,7 @@ const docker = new Docker();
 
 export type Language = {
     name: string,
+    fileExtension?: string,
     aliases: string[],
     image: string,
     command: string[]

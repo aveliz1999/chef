@@ -69,7 +69,7 @@ export const exec = async function(req: Request, res: Response) {
         // Generate a unique ID for the run and store the code in a temporary folder
         const id = uuid();
         await fs.promises.mkdir(`${os.tmpdir()}/${id}`);
-        await fs.promises.writeFile(`${os.tmpdir()}/${id}/exec`, request.code);
+        await fs.promises.writeFile(`${os.tmpdir()}/${id}/exec${language.fileExtension || ''}`, request.code);
 
         // Run the code through the appropriate runner and send back the result
         const result = await runners[request.mode].run(`${os.tmpdir()}/${id}`, language, req.user, request.stdin);
