@@ -1,0 +1,9 @@
+name: rust
+fileExtension: .rs
+aliases:
+  - rs
+image: rust:alpine
+command:
+  - /bin/sh
+  - -c
+  - rustc /app/exec.rs -o /tmp/exec && /tmp/exec
