@@ -63,6 +63,7 @@ export default class DockerImmediate implements Runner {
         console.log(`Starting ${this.type} runner to run ${language.name} code. Container ID: ${container.id}`);
         container.modem.demuxStream(rwstream, stdoutStream, stderrStream)
         await container.start();
+        const startTime = Date.now();
 
         let running = true;
 
@@ -85,6 +86,7 @@ export default class DockerImmediate implements Runner {
             condition: 'not-running'
         });
         running = false;
+        const runningTime = Date.now() - startTime
 
         /*
          * Remove the container from the system. Done with then/catch rather than await so that this step is done
@@ -102,7 +104,8 @@ export default class DockerImmediate implements Runner {
         return {
             stdout,
             stderr,
-            combinedOutput
+            combinedOutput,
+            executionTime: runningTime
         };
     }
 }

@@ -18,7 +18,8 @@ export default interface Runner {
     run: (execMountPath: string, language: Language, user: Express.User, stdin?: string) => Promise<{
         stdout: string,
         stderr: string,
-        combinedOutput: string
+        combinedOutput: string,
+        executionTime: number
     } | {
         message: string
     }>;
