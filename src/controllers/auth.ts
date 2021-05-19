@@ -3,15 +3,12 @@ import jwt from 'jsonwebtoken';
 import {jwtConfig} from "../../config";
 import Joi, {ValidationError} from "joi";
 import axios from 'axios';
-import {githubConfig} from '../../config/index'
+import {githubConfig} from '../../config'
 
-/**
- * TODO This should have some form of authentication in order to prevent new tokens from being given out infinitely
- */
 export const create = async function(req: Request, res: Response) {
     const defaultToken = {
         mode: 'docker-immediate',
-        maxRuntime: 3000
+        maxRuntime: 2500
     }
 
     const token = jwt.sign(defaultToken, jwtConfig.secret, {
@@ -49,8 +46,17 @@ export const github = async function(req: Request, res: Response) {
 
         const {id: githubId} = userResponse.data;
 
-        // TODO authenticate the github ID with a database and link it to a token rather than just sending the id back
-        return res.send({id: githubId});
+        const token = {
+            mode: 'docker-immediate',
+            maxRuntime: 5000,
+            githubId
+        }
+
+        const signedToken = jwt.sign(token, jwtConfig.secret, {
+            expiresIn: '1d'
+        });
+
+        return res.send(signedToken);
     }
     catch(err) {
         if (err.isJoi) {
