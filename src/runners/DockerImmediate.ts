@@ -9,12 +9,6 @@ export default class DockerImmediate implements Runner {
     type = 'docker-immediate';
 
     async run(execMountPath: string, language: Language, user: Express.User, stdin: string | undefined) {
-        if(user.mode !== this.type) {
-            return {
-                message: `That token is not valid for ${this.type} mode runs.`
-            }
-        }
-
         // StdOut and StdErr combined
         let combinedOutput = '';
 
@@ -63,16 +57,24 @@ export default class DockerImmediate implements Runner {
         console.log(`Starting ${this.type} runner to run ${language.name} code. Container ID: ${container.id}`);
         container.modem.demuxStream(rwstream, stdoutStream, stderrStream)
         await container.start();
-        const startTime = Date.now();
 
         let running = true;
 
         setTimeout(async () => {
             if(running) {
-                stderrStream.write(`\n\n\n---------------------\nExecution ran over ${(user.maxRuntime || 3000) / 1000} seconds.\nKilling the process.\n---------------------\n\n\n`, 'utf-8');
-                await container.kill();
+                stderrStream.write(`\n\n\n---------------------\nExecution ran over ${user.maxRuntime / 1000} seconds.\nKilling the process.\n---------------------\n\n\n`, 'utf-8');
+                try{
+                    await container.kill();
+                }
+                catch(err) {
+                    // There is a small chance that the `running` check passes, but by the time the `kill` command is
+                    // sent, the container was already stopped. This checks for that
+                    if(err.statusCode !== 404) {
+                        console.error(err);
+                    }
+                }
             }
-        }, user.maxRuntime || 3000)
+        }, user.maxRuntime)
 
         if(stdin) {
             rwstream.write(stdin);
@@ -86,7 +88,9 @@ export default class DockerImmediate implements Runner {
             condition: 'not-running'
         });
         running = false;
-        const runningTime = Date.now() - startTime
+
+        const stats = await container.inspect();
+        const executionTime = new Date(stats.State.FinishedAt).getTime() - new Date(stats.State.StartedAt).getTime();
 
         /*
          * Remove the container from the system. Done with then/catch rather than await so that this step is done
@@ -105,7 +109,7 @@ export default class DockerImmediate implements Runner {
             stdout,
             stderr,
             combinedOutput,
-            executionTime: runningTime
+            executionTime
         };
     }
 }
