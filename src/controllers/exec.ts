@@ -66,13 +66,21 @@ export const exec = async function(req: Request, res: Response) {
             request.stdin += '\n';
         }
 
+        // Compare that the user can use the requested runner
+        const runner = runners[request.mode];
+        if(req.user.mode !== runner.type) {
+            return res.status(400).send({
+                message: `That token is not valid for ${this.type} mode runs.`
+            })
+        }
+
         // Generate a unique ID for the run and store the code in a temporary folder
         const id = uuid();
         await fs.promises.mkdir(`${os.tmpdir()}/${id}`);
         await fs.promises.writeFile(`${os.tmpdir()}/${id}/exec${language.fileExtension || ''}`, request.code);
 
         // Run the code through the appropriate runner and send back the result
-        const result = await runners[request.mode].run(`${os.tmpdir()}/${id}`, language, req.user, request.stdin);
+        const result = await runner.run(`${os.tmpdir()}/${id}`, language, req.user, request.stdin);
         res.send(result);
 
         // Remove the temporary folder used to hold the code
