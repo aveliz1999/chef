@@ -59,6 +59,14 @@ export const exec = async function(req: Request, res: Response) {
             mode: string
         } = await requestSchema.validateAsync(req.body);
 
+        // Set default parameters if no token is given
+        if(!req.user) {
+            req.user = {
+                mode: 'docker-immediate',
+                maxRuntime: 2500
+            }
+        }
+
         const language = languages[request.language];
 
         // Pad stdin with a newline if it doesn't end with one so that stdin doesn't hang

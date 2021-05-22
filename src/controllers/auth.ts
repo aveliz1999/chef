@@ -5,19 +5,6 @@ import Joi, {ValidationError} from "joi";
 import axios from 'axios';
 import {githubConfig} from '../../config'
 
-export const create = async function(req: Request, res: Response) {
-    const defaultToken = {
-        mode: 'docker-immediate',
-        maxRuntime: 2500
-    }
-
-    const token = jwt.sign(defaultToken, jwtConfig.secret, {
-        expiresIn: '1d'
-    });
-
-    return res.send(token);
-}
-
 export const github = async function(req: Request, res: Response) {
     const schema = Joi.object({
         code: Joi.string()

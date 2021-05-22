@@ -7,7 +7,8 @@ const router = express.Router();
 
 router.post('/', jwt({
     secret: jwtConfig.secret,
-    algorithms: ['HS256']
+    algorithms: ['HS256'],
+    credentialsRequired: false
 }), exec);
 
 router.use(function (err, req, res, next) {
