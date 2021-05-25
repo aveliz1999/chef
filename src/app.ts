@@ -1,4 +1,7 @@
 import express from 'express';
+import initSequelize from './sequelize';
+
+initSequelize();
 
 const app = express();
 
