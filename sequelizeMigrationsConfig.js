@@ -1,8 +1,8 @@
-import yaml from "yaml";
-import fs from "fs";
-import path from "path";
+const yaml = require('yaml');
+const fs = require('fs');
+const path = require('path');
 
-const config = yaml.parse(fs.readFileSync(path.resolve(__dirname, 'database.yaml'), 'utf-8'));
+const config = yaml.parse(fs.readFileSync(path.resolve(__dirname, 'config', 'database.yaml'), 'utf-8'));
 
 module.exports = {
     development: {
