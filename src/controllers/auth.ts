@@ -54,9 +54,12 @@ export const github = async function(req: Request, res: Response) {
         }
 
         const token = {
-            mode: 'docker-immediate',
-            maxRuntime: 5000,
-            githubId
+            githubId,
+            modes: {
+                'docker-immediate': {
+                    maxRuntime: 5000
+                }
+            }
         }
 
         const signedToken = jwt.sign(token, jwtConfig.secret, {

@@ -3,8 +3,12 @@ import { Language} from "../languages";
 declare global {
     namespace Express {
         interface User {
-            mode: string,
-            maxRuntime?: number
+            githubId?: number
+            modes: {
+                [key: string]: {
+                    maxRuntime: number
+                }
+            }
         }
 
         interface Request {

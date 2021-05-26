@@ -62,7 +62,7 @@ export default class DockerImmediate implements Runner {
 
         setTimeout(async () => {
             if(running) {
-                stderrStream.write(`\n\n\n---------------------\nExecution ran over ${user.maxRuntime / 1000} seconds.\nKilling the process.\n---------------------\n\n\n`, 'utf-8');
+                stderrStream.write(`\n\n\n---------------------\nExecution ran over ${user.modes[this.type].maxRuntime / 1000} seconds.\nKilling the process.\n---------------------\n\n\n`, 'utf-8');
                 try{
                     await container.kill();
                 }
@@ -74,7 +74,7 @@ export default class DockerImmediate implements Runner {
                     }
                 }
             }
-        }, user.maxRuntime)
+        }, user.modes[this.type].maxRuntime)
 
         if(stdin) {
             rwstream.write(stdin);

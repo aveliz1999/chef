@@ -62,8 +62,11 @@ export const exec = async function(req: Request, res: Response) {
         // Set default parameters if no token is given
         if(!req.user) {
             req.user = {
-                mode: 'docker-immediate',
-                maxRuntime: 2500
+                modes: {
+                    'docker-immediate': {
+                        maxRuntime: 2500
+                    }
+                }
             }
         }
 
@@ -76,7 +79,7 @@ export const exec = async function(req: Request, res: Response) {
 
         // Compare that the user can use the requested runner
         const runner = runners[request.mode];
-        if(req.user.mode !== runner.type) {
+        if(!req.user.modes[request.mode] || request.mode !== runner.type) {
             return res.status(400).send({
                 message: `That token is not valid for ${this.type} mode runs.`
             })
