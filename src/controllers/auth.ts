@@ -4,6 +4,7 @@ import {jwtConfig} from "../../config";
 import Joi, {ValidationError} from "joi";
 import axios from 'axios';
 import {githubConfig} from '../../config'
+import User from "../models/User";
 
 export const github = async function(req: Request, res: Response) {
     const schema = Joi.object({
@@ -31,7 +32,26 @@ export const github = async function(req: Request, res: Response) {
             }
         });
 
-        const {id: githubId} = userResponse.data;
+        const {id: githubId}: {id: number} = userResponse.data;
+
+        const user = await User.findOne({
+            where: {
+                githubId
+            }
+        });
+        if(user) {
+            if(user.banned) {
+                return res.status(403).send({message: 'This account is disabled.'});
+            }
+        }
+        else {
+            // @ts-ignore
+            const createdUser = await User.create({
+                githubId,
+                banned: false,
+                accessLevel: 0
+            });
+        }
 
         const token = {
             mode: 'docker-immediate',
