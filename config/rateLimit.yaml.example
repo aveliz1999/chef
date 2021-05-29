@@ -1,0 +1,3 @@
+timeInMs: 1000
+maxRequestsUnauthenticated: 1
+maxRequestsAuthenticated: 5
