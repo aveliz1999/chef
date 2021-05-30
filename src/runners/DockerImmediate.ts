@@ -2,6 +2,7 @@ import Runner from "./Runner";
 import {Writable} from "stream";
 import Docker from "dockerode";
 import {Language} from "../languages";
+import {securityConfig} from "../../config";
 
 const docker = new Docker();
 
@@ -42,7 +43,8 @@ export default class DockerImmediate implements Runner {
             AttachStdout: true,
             AttachStderr: true,
             AttachStdin: true,
-            Cmd: language.command
+            Cmd: language.command,
+            NetworkDisabled: securityConfig.disableNetworking
         });
 
         // Attach the streams to the container
