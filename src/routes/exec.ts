@@ -1,9 +1,11 @@
 import express from 'express';
 import {exec, versions} from '../controllers/exec';
 import jwt from 'express-jwt';
-import {jwtConfig} from '../../config';
+import {jwtConfig, redisConfig} from '../../config';
 import {rateLimitConfig} from "../../config";
 import rateLimit from 'express-rate-limit';
+import RedisStore from 'rate-limit-redis'
+import {createClient} from 'redis';
 
 const router = express.Router();
 
@@ -15,8 +17,11 @@ router.use(jwt({
     credentialsRequired: false
 }));
 
-// TODO switch from using MemoryStore to another storage. Redis recommended
 router.use(rateLimit({
+    store: new RedisStore({
+        expiry: rateLimitConfig.timeInMs,
+        client: createClient(redisConfig)
+    }),
     windowMs: rateLimitConfig.timeInMs,
     max: (req, res): number => {
         if(req.user) {

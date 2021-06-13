@@ -30,8 +30,15 @@ export type SecurityConfig = {
     disableNetworking: boolean
 }
 
+export type RedisConfig = {
+    host: string
+    port: number
+    db: number
+}
+
 export const jwtConfig: JWTConfig = yaml.parse(fs.readFileSync(path.resolve(__dirname, 'jwt.yaml'), 'utf-8'));
 export const githubConfig: GithubConfig = yaml.parse(fs.readFileSync(path.resolve(__dirname, 'github.yaml'), 'utf-8'));
 export const databaseConfig: DatabaseConfig = yaml.parse(fs.readFileSync(path.resolve(__dirname, 'database.yaml'), 'utf-8'));
 export const rateLimitConfig: RateLimitConfig = yaml.parse(fs.readFileSync(path.resolve(__dirname, 'rateLimit.yaml'), 'utf-8'));
 export const securityConfig: SecurityConfig = yaml.parse(fs.readFileSync(path.resolve(__dirname, 'security.yaml'), 'utf-8'));
+export const redisConfig: RedisConfig = yaml.parse(fs.readFileSync(path.resolve(__dirname, 'redis.yaml'), 'utf-8'));
